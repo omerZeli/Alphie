@@ -151,16 +151,7 @@ class server:
         else:
             self.messages_to_send.append((current_socket, "You have a mistake in your user name or your password"))
 
-    def main(self):
-        print("server begin")
-        server_socket = socket.socket()
-        server_socket.bind(("0.0.0.0", 8820))
-        server_socket.listen(1)
-        users_column1 = 'user_name'
-        users_column2 = 'password'
-        keys_column1 = 'the_key'
-        keys_column2 = 'the_file'
-
+    def handle_word(self, server_socket, users_column1, users_column2, keys_column1, keys_column2):
         while True:
             # select
             rlist, wlist, xlist = \
@@ -231,6 +222,19 @@ class server:
                         except:
                             self.messages_to_send.append((current_socket, "no results"))
             self.send_waiting_messages(wlist, self.messages_to_send)
+
+
+    def main(self):
+        print("server begin")
+        server_socket = socket.socket()
+        server_socket.bind(("0.0.0.0", 8820))
+        server_socket.listen(1)
+        users_column1 = 'user_name'
+        users_column2 = 'password'
+        keys_column1 = 'the_key'
+        keys_column2 = 'the_file'
+
+        self.handle_word(server_socket, users_column1, users_column2, keys_column1, keys_column2)
 
 
 data_base_path = 'data_base.db'
