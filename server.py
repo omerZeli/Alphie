@@ -2,6 +2,7 @@ import socket
 import sqlite3
 import select
 import create_db
+import threading
 
 
 class server:
@@ -26,7 +27,7 @@ class server:
                 messages_to_send.remove(message)
 
     # find the word in the data base
-    def find_word(self, the_word, current_socket):
+    def find_word(self, the_word):
         # open the data base
         conn = sqlite3.connect(self.data_base_path)
         cursor = conn.execute("SELECT * from {}".format(self.keys_table_name))
@@ -118,7 +119,7 @@ class server:
         return profile
 
     # if the user is in the table
-    def in_table(self, profile, sign):
+    def sign_in_table(self, profile, sign):
         conn = sqlite3.connect(self.data_base_path)
         cursor = conn.execute("SELECT * from {}".format(self.users_table_name))
         exist = False
@@ -135,7 +136,7 @@ class server:
     # sign up an user
     def sing_up(self, column1, column2, the_word, current_socket):
         profile = self.cut_sign_msg(the_word)
-        exist = self.in_table(profile, "sign_up")
+        exist = self.sign_in_table(profile, "sign_up")
         if exist:
             self.messages_to_send.append((current_socket, "This user is already exists"))
         else:
@@ -145,12 +146,13 @@ class server:
     # sign in an user
     def sign_in(self, the_word, current_socket):
         profile = self.cut_sign_msg(the_word)
-        exist = self.in_table(profile, "sign_in")
+        exist = self.sign_in_table(profile, "sign_in")
         if exist:
             self.messages_to_send.append((current_socket, "You signed in"))
         else:
             self.messages_to_send.append((current_socket, "You have a mistake in your user name or your password"))
 
+    # get message from the client and handle it
     def handle_word(self, server_socket, users_column1, users_column2, keys_column1, keys_column2):
         while True:
             # select
@@ -171,7 +173,12 @@ class server:
                         self.open_client_sockets.remove(current_socket)
                         for to_add in self.words_to_add:
                             if to_add[0] == current_socket:
-                                self.create.insert_keys(keys_column1, keys_column2, to_add[1])
+                                try:
+                                    t = threading.Thread(target=lambda: self.create.insert_keys(
+                                        keys_column1, keys_column2, to_add[1]))
+                                    t.start()
+                                except:
+                                    pass
                                 self.words_to_add.remove(to_add)
                     # sign up message
                     elif "sign_up" in the_word:
@@ -209,7 +216,7 @@ class server:
                     # if the server got a word to search
                     else:
                         try:
-                            results = self.find_word(the_word, current_socket)
+                            results = self.find_word(the_word)
                             # there is no results to the word
                             if results == "no results":
                                 # add the word to words_to_add
@@ -222,7 +229,6 @@ class server:
                         except:
                             self.messages_to_send.append((current_socket, "no results"))
             self.send_waiting_messages(wlist, self.messages_to_send)
-
 
     def main(self):
         print("server begin")
