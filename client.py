@@ -13,6 +13,7 @@ class client:
         self.root.title("Alphie")   # the title of the window
         self.root.configure(background="firebrick1")    # change the window color
         self.text_box = tk.Text(self.root, height=10, width=150)    # create text box
+        self.text_box.configure(state='disabled')
         self.entry = tk.Entry(self.root)    # create entry
         self.enter_button = tk.Button(self.root, text="enter")      # create enter button
         self.menu_bar = tk.Menu(self.root)      # the main menu
@@ -35,7 +36,9 @@ class client:
 
     # print message to text box
     def print_message(self, text):
+        self.text_box.configure(state='normal')
         self.text_box.insert(tk.END, text + "\n")
+        self.text_box.configure(state='disabled')
 
     # input message
     def input(self, text):
@@ -58,7 +61,9 @@ class client:
 
     # delete all the text in the text box
     def delete_text_box(self):
+        self.text_box.configure(state='normal')
         self.text_box.delete('1.0', tk.END)
+        self.text_box.configure(state='disabled')
 
     # send quit to the server to stop the connection with the server
     def close_button(self):
