@@ -15,8 +15,8 @@ class client:
         self.text_box = tk.Text(self.root, height=10, width=150)    # create text box
         self.entry = tk.Entry(self.root)    # create entry
         self.enter_button = tk.Button(self.root, text="enter")      # create enter button
-        self.menu_bar = tk.Menu(self.root)
-        self.back_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.menu_bar = tk.Menu(self.root)      # the main menu
+        self.back_menu = tk.Menu(self.menu_bar, tearoff=0)      # back menu, added to menu_nar
 
     # input details in sign up/in
     def input_sign(self, sign):
@@ -33,9 +33,11 @@ class client:
         ans = ans.decode()
         return ans
 
+    # print message to text box
     def print_message(self, text):
         self.text_box.insert(tk.END, text + "\n")
 
+    # input message
     def input(self, text):
         self.print_message(text)
         var = tk.IntVar()
@@ -64,6 +66,7 @@ class client:
         self.my_socket.close()
         self.root.destroy()
 
+    # add back_menu to menu_bar, add it to window
     def create_menu(self):
         self.menu_bar.add_cascade(label="back", menu=self.back_menu)
         self.root.config(menu=self.menu_bar)
