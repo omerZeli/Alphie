@@ -18,6 +18,7 @@ class client:
         self.enter_button = tk.Button(self.root, text="enter")      # create enter button
         self.menu_bar = tk.Menu(self.root)      # the main menu
         self.back_menu = tk.Menu(self.menu_bar, tearoff=0)      # back menu, added to menu_nar
+        self.history_menu = tk.Menu(self.menu_bar, tearoff=0)      # history menu, added to menu_nar
 
     # input details in sign up/in
     def input_sign(self, sign):
@@ -74,6 +75,7 @@ class client:
     # add back_menu to menu_bar, add it to window
     def create_menu(self):
         self.menu_bar.add_cascade(label="back", menu=self.back_menu)
+        self.menu_bar.add_cascade(label="history", menu=self.history_menu)
         self.root.config(menu=self.menu_bar)
 
     # graphic - the start of the app, choose sign up/in
@@ -81,6 +83,7 @@ class client:
         self.delete_items()
         self.delete_text_box()
         self.back_menu.delete(0)
+        self.history_menu.delete(0)
         self.text_box.pack()
         self.print_message("Hello, my name is Alphie")
         self.print_message("If you have an user click sign in, else click sign up")
@@ -96,6 +99,7 @@ class client:
         self.delete_text_box()
         # back goes to show start
         self.back_menu.delete(0)
+        self.history_menu.delete(0)
         self.back_menu.add_command(label="start", command=lambda: self.show_start())
         self.text_box.pack()
         self.entry.pack()
@@ -117,13 +121,19 @@ class client:
         self.delete_items()
         self.delete_text_box()
         self.back_menu.delete(0)
+        self.history_menu.delete(0)
         self.back_menu.add_command(label="start", command=lambda: self.show_start())
+        self.history_menu.add_command(label="show history", command=lambda: self.show_history())
         self.text_box.pack()
         self.entry.pack()
         self.print_message("Now enter the word you want to search")
         self.print_message("And I'll show you all the results")
         # input the word
         word = self.input("")
+        self.do_search(word)
+
+    # do the search
+    def do_search(self, word):
         results = self.send_and_rec(word)
         self.show_results(results)
 
@@ -172,6 +182,25 @@ class client:
             data = data.decode()
             text += data
         return text
+
+    # graphic - the history
+    def show_history(self):
+        self.delete_items()
+        self.delete_text_box()
+        self.back_menu.delete(0)
+        self.back_menu.add_command(label="search", command=lambda: self.show_search())
+        self.text_box.pack()
+        self.text_box.configure(height=10)
+        self.print_message("This is your last history")
+        msg = "get_history; {}".format(self.user_name)
+        results = self.send_and_rec(msg)
+        results_list = results.split(', ')
+        for button_text in results_list:
+            button = tk.Button(self.root, text=button_text,
+                               command=lambda name=button_text: self.do_search(button_text))
+            button.pack()
+            if button_text == "no results":
+                button.configure(command=lambda: 0)
 
     def main(self):
         # connect the client to the server

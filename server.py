@@ -11,10 +11,12 @@ class server:
         self.data_base_path = data_base_path    # db file path
         self.keys_table_name = "KEYS"
         self.users_table_name = "USERS"
+        self.history_table_name = "HIST"
         self.open_client_sockets = []
         self.messages_to_send = []
         self.create = create_db.create(data_base_path, files_path)
         self.words_to_add = []    # words to add after client close
+        self.socket_names = []    # the user name of every socket
 
     # send messages
     def send_waiting_messages(self, wlist, messages_to_send):
@@ -142,6 +144,7 @@ class server:
         else:
             self.create.insert(self.users_table_name, column1, column2, profile)
             self.messages_to_send.append((current_socket, "You signed up"))
+            self.socket_names.append((current_socket, profile[0]))
 
     # sign in an user
     def sign_in(self, the_word, current_socket):
@@ -149,11 +152,18 @@ class server:
         exist = self.sign_in_table(profile, "sign_in")
         if exist:
             self.messages_to_send.append((current_socket, "You signed in"))
+            self.socket_names.append((current_socket, profile[0]))
         else:
             self.messages_to_send.append((current_socket, "You have a mistake in your user name or your password"))
 
+    def find_name(self, current_socket):
+        for socket in self.socket_names:
+            if socket[0] == current_socket:
+                return socket[1]
+
     # get message from the client and handle it
-    def handle_word(self, server_socket, users_column1, users_column2, keys_column1, keys_column2):
+    def handle_word(self, server_socket,
+                    users_column1, users_column2, keys_column1, keys_column2, history_column1, history_column2):
         while True:
             # select
             rlist, wlist, xlist = \
@@ -213,9 +223,35 @@ class server:
                         except:
                             text = "Can't show the file"
                         self.messages_to_send.append((current_socket, text))
+                    # find the user history on data base
+                    elif "get_history" in the_word:
+                        (command, name) = the_word.split("; ")
+                        conn = sqlite3.connect(self.data_base_path)
+                        cursor = conn.execute("SELECT * from {}".format(self.history_table_name))
+                        result_list = []
+                        results = ""
+                        for row in cursor:
+                            if row[0] == name:
+                                if row[1] not in result_list:
+                                    result_list.append(row[1])
+                        # only last 20 results
+                        if len(result_list) > 20:
+                            start = len(result_list) - 20
+                            result_list = result_list[start:]
+                        # make the list to a string
+                        for word in result_list:
+                            results += word + ", "
+                        if results == "":
+                            results = "no results"
+                        else:
+                            results = results[:-2]
+                        self.messages_to_send.append((current_socket, results))
                     # if the server got a word to search
                     else:
                         try:
+                            name = self.find_name(current_socket)
+                            history = (name, the_word)
+                            self.create.insert(self.history_table_name, history_column1, history_column2, history)
                             results = self.find_word(the_word)
                             # there is no results to the word
                             if results == "no results":
@@ -239,8 +275,11 @@ class server:
         users_column2 = 'password'
         keys_column1 = 'the_key'
         keys_column2 = 'the_file'
+        history_column1 = 'user_name'
+        history_column2 = 'search'
 
-        self.handle_word(server_socket, users_column1, users_column2, keys_column1, keys_column2)
+        self.handle_word(
+            server_socket, users_column1, users_column2, keys_column1, keys_column2, history_column1, history_column2)
 
 
 data_base_path = 'data_base.db'

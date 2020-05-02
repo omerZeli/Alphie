@@ -8,6 +8,7 @@ class create:
         self.data_base_path = data_base_path
         self.keys_table_name = "KEYS"
         self.users_table_name = "USERS"
+        self.history_table_name = "HIST"
         self.files_path = files_path
 
     # create data base table
@@ -103,11 +104,15 @@ class create:
             keys_column2 = 'the_file'
             users_column1 = 'user_name'
             users_column2 = 'password'
+            history_column1 = 'user_name'
+            history_column2 = 'search'
             self.create_table(self.data_base_path, self.users_table_name, users_column1, users_column2)
             print("Users data base created")
             self.create_table(self.data_base_path, self.keys_table_name, keys_column1, keys_column2)
             self.insert_keys(keys_column1, keys_column2)
             print("Keys data base created")
+            self.create_table(self.data_base_path, self.history_table_name, history_column1, history_column2)
+            print("History data base created")
         except:
             pass
 
