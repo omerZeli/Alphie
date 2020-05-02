@@ -156,10 +156,34 @@ class server:
         else:
             self.messages_to_send.append((current_socket, "You have a mistake in your user name or your password"))
 
+    # find the name of the socket
     def find_name(self, current_socket):
         for socket in self.socket_names:
             if socket[0] == current_socket:
                 return socket[1]
+
+    # find the history of the user
+    def find_history(self, name):
+        conn = sqlite3.connect(self.data_base_path)
+        cursor = conn.execute("SELECT * from {}".format(self.history_table_name))
+        result_list = []
+        results = ""
+        for row in cursor:
+            if row[0] == name:
+                if row[1] not in result_list:
+                    result_list.append(row[1])
+        # only last 20 results
+        if len(result_list) > 20:
+            start = len(result_list) - 20
+            result_list = result_list[start:]
+        # make the list to a string
+        for word in result_list:
+            results += word + ", "
+        if results == "":
+            results = "no results"
+        else:
+            results = results[:-2]
+        return results
 
     # get message from the client and handle it
     def handle_word(self, server_socket,
@@ -179,14 +203,19 @@ class server:
                     the_word = current_socket.recv(1024)
                     the_word = the_word.decode()
                     # if the client want to quit the app
-                    if the_word == 'close_window':
+                    if the_word == "close_window":
+                        # remove socket from lists
                         self.open_client_sockets.remove(current_socket)
+                        for socket in self.socket_names:
+                            if socket[0] == current_socket:
+                                self.socket_names.remove(socket)
+                        # add word to data base
                         for to_add in self.words_to_add:
                             if to_add[0] == current_socket:
                                 try:
-                                    t = threading.Thread(target=lambda: self.create.insert_keys(
+                                    thread = threading.Thread(target=lambda: self.create.insert_keys(
                                         keys_column1, keys_column2, to_add[1]))
-                                    t.start()
+                                    thread.start()
                                 except:
                                     pass
                                 self.words_to_add.remove(to_add)
@@ -226,25 +255,7 @@ class server:
                     # find the user history on data base
                     elif "get_history" in the_word:
                         (command, name) = the_word.split("; ")
-                        conn = sqlite3.connect(self.data_base_path)
-                        cursor = conn.execute("SELECT * from {}".format(self.history_table_name))
-                        result_list = []
-                        results = ""
-                        for row in cursor:
-                            if row[0] == name:
-                                if row[1] not in result_list:
-                                    result_list.append(row[1])
-                        # only last 20 results
-                        if len(result_list) > 20:
-                            start = len(result_list) - 20
-                            result_list = result_list[start:]
-                        # make the list to a string
-                        for word in result_list:
-                            results += word + ", "
-                        if results == "":
-                            results = "no results"
-                        else:
-                            results = results[:-2]
+                        results = self.find_history(name)
                         self.messages_to_send.append((current_socket, results))
                     # if the server got a word to search
                     else:
