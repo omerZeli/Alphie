@@ -114,7 +114,6 @@ class client:
                 msg = self.input_sign("sign_in")
                 ser_ans = self.send_and_rec(msg)
                 self.print_message(ser_ans)
-        print(self.user_name)
         self.show_search()
 
     # graphic - the searching
@@ -146,7 +145,7 @@ class client:
         self.back_menu.add_command(label="search", command=lambda: self.show_search())
         self.text_box.pack()
         self.text_box.configure(height=10)
-        self.print_message("Click the line that you want to read about")
+        self.print_message("Click the method that you want to read about")
         # create button for every file result
         results_list = methods.split(', ')
         for button_text in results_list:
@@ -164,7 +163,7 @@ class client:
         self.back_menu.add_command(label="methods", command=lambda: self.show_methods(methods))
         self.text_box.pack()
         self.text_box.configure(height=10)
-        self.print_message("Click the line that you want to read about")
+        self.print_message("Click the file you want to open")
         # create button for every file result
         results = self.send_and_rec("get_files; {}".format(method))
         files = results.split(", ")
