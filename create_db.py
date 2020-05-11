@@ -4,12 +4,13 @@ import os
 
 class create:
 
-    def __init__(self, data_base_path, files_path):
+    def __init__(self, data_base_path, files_path, add=""):
         self.data_base_path = data_base_path
         self.keys_table_name = "KEYS"
         self.users_table_name = "USERS"
         self.history_table_name = "HIST"
         self.files_path = files_path
+        self.add = add
 
     # create data base table
     def create_table(self, table_path, table_name, column1, column2):
@@ -53,29 +54,25 @@ class create:
                 file = open(path, "r")
                 contents = file.read()
                 lines = contents.split("\n")
-                # the keys
-                general_keys = ["import"]
-                python_keys = ["import", "def"]
-                java_keys = ["import", "public"]
-                # add word that client searched
-                if special != "":
-                    keys = [special]
-                # add keys that known to me
-                elif ".py" in path:
-                    keys = python_keys
-                elif ".java" in path:
-                    keys = java_keys
-                else:
-                    keys = general_keys
-                # find the keys in the current file
+                # find the imports from file
+                imports = []
                 for line in lines:
-                    for key in keys:
-                        if key in line:
-                            tup = (line, path)
-                            lines_list.append(tup)
-                # add the last name of the file
-                last_path = path.split("\\")[-1]
-                lines_list.append((last_path, path))
+                    spl_line = line.split(" ")
+                    if "import" in line:
+                        for word in spl_line:
+                            try:
+                                dir(__import__(word))
+                                if word not in imports:
+                                    imports.append(word)
+                            except:
+                                pass
+                for imp in imports:
+                    methods = dir(__import__(imp))
+                    for method in methods:
+                        the_method = "{}.".format(method)
+                        if the_method in contents:
+                            method_name = "{}.{}()".format(imp, method)
+                            lines_list.append((method_name, path))
                 file.close()
             except:
                 pass
@@ -88,7 +85,7 @@ class create:
         try:
             conn.execute(st)
         except:
-            print("the line " + st + " can't be in the db")
+            pass
         conn.commit()
         conn.close()
 
@@ -99,22 +96,32 @@ class create:
             self.insert(self.keys_table_name, column1, column2, data)
 
     def main(self):
-        try:
-            keys_column1 = 'the_key'
-            keys_column2 = 'the_file'
-            users_column1 = 'user_name'
-            users_column2 = 'password'
-            history_column1 = 'user_name'
-            history_column2 = 'search'
-            self.create_table(self.data_base_path, self.users_table_name, users_column1, users_column2)
-            print("Users data base created")
-            self.create_table(self.data_base_path, self.keys_table_name, keys_column1, keys_column2)
-            self.insert_keys(keys_column1, keys_column2)
-            print("Keys data base created")
-            self.create_table(self.data_base_path, self.history_table_name, history_column1, history_column2)
-            print("History data base created")
-        except:
-            pass
+        keys_column1 = 'the_key'
+        keys_column2 = 'the_file'
+        users_column1 = 'user_name'
+        users_column2 = 'password'
+        history_column1 = 'user_name'
+        history_column2 = 'search'
+        if self.add != "":
+            try:
+                save_path = self.files_path
+                self.files_path = self.add
+                self.insert_keys(keys_column1, keys_column2)
+                print(self.files_path + " added")
+                self.files_path = save_path
+            except:
+                pass
+        else:
+            try:
+                self.create_table(self.data_base_path, self.users_table_name, users_column1, users_column2)
+                print("Users data base created")
+                self.create_table(self.data_base_path, self.keys_table_name, keys_column1, keys_column2)
+                self.insert_keys(keys_column1, keys_column2)
+                print("Keys data base created")
+                self.create_table(self.data_base_path, self.history_table_name, history_column1, history_column2)
+                print("History data base created")
+            except:
+                pass
 
 
 data_base_path = 'data_base.db'

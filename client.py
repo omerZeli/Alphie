@@ -114,6 +114,7 @@ class client:
                 msg = self.input_sign("sign_in")
                 ser_ans = self.send_and_rec(msg)
                 self.print_message(ser_ans)
+        print(self.user_name)
         self.show_search()
 
     # graphic - the searching
@@ -134,33 +135,50 @@ class client:
 
     # do the search
     def do_search(self, word):
-        results = self.send_and_rec(word)
-        self.show_results(results)
+        methods = self.send_and_rec(word)
+        self.show_methods(methods)
 
-    # graphic - the results of the searching
-    def show_results(self, results):
+    # graphic - the methods from the searching
+    def show_methods(self, methods):
         self.delete_items()
         self.delete_text_box()
         self.back_menu.delete(0)
         self.back_menu.add_command(label="search", command=lambda: self.show_search())
         self.text_box.pack()
         self.text_box.configure(height=10)
-        self.print_message("Click the file name that you want to open")
+        self.print_message("Click the line that you want to read about")
         # create button for every file result
-        results_list = results.split(', ')
+        results_list = methods.split(', ')
         for button_text in results_list:
             button = tk.Button(self.root, text=button_text,
-                               command=lambda name=button_text: self.show_file(results, name))
+                               command=lambda name=button_text: self.show_results(methods, name))
             button.pack()
             if button_text == "no results":
                 button.configure(command=lambda: 0)
 
-    # graphic - the file
-    def show_file(self, results, file_name):
+    # graphic - the file of the method
+    def show_results(self, methods, method):
         self.delete_items()
         self.delete_text_box()
         self.back_menu.delete(0)
-        self.back_menu.add_command(label="results", command=lambda: self.show_results(results))
+        self.back_menu.add_command(label="methods", command=lambda: self.show_methods(methods))
+        self.text_box.pack()
+        self.text_box.configure(height=10)
+        self.print_message("Click the line that you want to read about")
+        # create button for every file result
+        results = self.send_and_rec("get_files; {}".format(method))
+        files = results.split(", ")
+        for button_text in files:
+            button = tk.Button(self.root, text=button_text,
+                               command=lambda name=button_text: self.show_file(methods, method, name))
+            button.pack()
+
+    # graphic - the file
+    def show_file(self, methods, method, file_name):
+        self.delete_items()
+        self.delete_text_box()
+        self.back_menu.delete(0)
+        self.back_menu.add_command(label="files", command=lambda: self.show_results(methods, method))
         self.text_box.pack()
         self.text_box.configure(height=30)
         # get the file from server
@@ -197,7 +215,7 @@ class client:
         results_list = results.split(', ')
         for button_text in results_list:
             button = tk.Button(self.root, text=button_text,
-                               command=lambda name=button_text: self.do_search(button_text))
+                               command=lambda name=button_text: self.do_search(name))
             button.pack()
             if button_text == "no results":
                 button.configure(command=lambda: 0)

@@ -34,7 +34,6 @@ class server:
         conn = sqlite3.connect(self.data_base_path)
         cursor = conn.execute("SELECT * from {}".format(self.keys_table_name))
         names_lst = []
-        full_word_list = []
         cut_word = the_word.split(' ')
         # delete connectors
         delete_words = ["i", "a", "to", "the", "do", "can", "how", "what", "of", "for", "from", "on", "in"]
@@ -47,33 +46,23 @@ class server:
             for word in cut_word:
                 # row[0] = key, word[1] = file name
                 if word.lower() in row[0].lower():
-                    names_lst.append(row[1])
-                    # if the full word in row
-                    cut_row = row[0].split(" ")
-                    for row_word in cut_row:
-                        if word.lower() == row_word.lower():
-                            full_word_list.append(row[1])
+                    names_lst.append(row[0])
         # get list with grades
-        file_lst = self.get_grade(names_lst, full_word_list)
+        file_lst = self.get_grade(names_lst)
         results = self.return_results(file_lst)
         return results
 
     # find the grade of every file
-    def get_grade(self, names_lst, full_word_list):
+    def get_grade(self, names_lst):
         file_lst = []
         for name in names_lst:
             # how much matches in the file
-            exist = 0
+            grade = 0
             for another_name in names_lst:
                 if another_name == name:
-                    exist += 1
-            # how much full matches in the file
-            full = 0
-            for full_name in full_word_list:
-                if full_name == name:
-                    full += 2
+                    grade += 1
             # add the file name with its grade to list
-            current_file = (name, exist + full)
+            current_file = (name, grade)
             if current_file not in file_lst:
                 file_lst.append(current_file)
         return file_lst
@@ -112,6 +101,17 @@ class server:
             lst.remove(max_file)
         return order_lst
 
+    # find the files withe the method
+    def find_file(self, method):
+        conn = sqlite3.connect(self.data_base_path)
+        cursor = conn.execute("SELECT * from {}".format(self.keys_table_name))
+        files_lst = ""
+        for row in cursor:
+            if row[0] == method:
+                files_lst += row[1] + ", "
+        files_lst = files_lst[:-2]
+        return files_lst
+
     # find the user name and the password from the message
     def cut_sign_msg(self, msg):
         data = msg.split("; ")
@@ -144,7 +144,7 @@ class server:
         else:
             self.create.insert(self.users_table_name, column1, column2, profile)
             self.messages_to_send.append((current_socket, "You signed up"))
-            self.socket_names.append((current_socket, profile[0]))
+            self.add_name(current_socket, profile[0])
 
     # sign in an user
     def sign_in(self, the_word, current_socket):
@@ -152,9 +152,16 @@ class server:
         exist = self.sign_in_table(profile, "sign_in")
         if exist:
             self.messages_to_send.append((current_socket, "You signed in"))
-            self.socket_names.append((current_socket, profile[0]))
+            self.add_name(current_socket, profile[0])
         else:
             self.messages_to_send.append((current_socket, "You have a mistake in your user name or your password"))
+
+    # add name of socket to the list
+    def add_name(self, socket, name):
+        for user in self.socket_names:
+            if user[0] == socket:
+                self.socket_names.remove(user)
+        self.socket_names.append((socket, name))
 
     # find the name of the socket
     def find_name(self, current_socket):
@@ -257,6 +264,11 @@ class server:
                         (command, name) = the_word.split("; ")
                         results = self.find_history(name)
                         self.messages_to_send.append((current_socket, results))
+                    # find the files form the method
+                    elif "get_files" in the_word:
+                        (command, method) = the_word.split("; ")
+                        files = self.find_file(method)
+                        self.messages_to_send.append((current_socket, files))
                     # if the server got a word to search
                     else:
                         try:
