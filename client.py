@@ -150,13 +150,13 @@ class client:
         results_list = methods.split(', ')
         for button_text in results_list:
             button = tk.Button(self.root, text=button_text,
-                               command=lambda name=button_text: self.show_results(methods, name))
+                               command=lambda name=button_text: self.show_files_results(methods, name))
             button.pack()
             if button_text == "no results":
                 button.configure(command=lambda: 0)
 
     # graphic - the file of the method
-    def show_results(self, methods, method):
+    def show_files_results(self, methods, method):
         self.delete_items()
         self.delete_text_box()
         self.back_menu.delete(0)
@@ -177,7 +177,7 @@ class client:
         self.delete_items()
         self.delete_text_box()
         self.back_menu.delete(0)
-        self.back_menu.add_command(label="files", command=lambda: self.show_results(methods, method))
+        self.back_menu.add_command(label="files", command=lambda: self.show_files_results(methods, method))
         self.text_box.pack()
         self.text_box.configure(height=30)
         # get the file from server

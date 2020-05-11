@@ -106,8 +106,12 @@ class server:
         conn = sqlite3.connect(self.data_base_path)
         cursor = conn.execute("SELECT * from {}".format(self.keys_table_name))
         files_lst = ""
+        times = 0
         for row in cursor:
+            if times > 20:
+                break
             if row[0] == method:
+                times += 1
                 files_lst += row[1] + ", "
         files_lst = files_lst[:-2]
         return files_lst
