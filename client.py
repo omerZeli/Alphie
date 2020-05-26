@@ -1,7 +1,5 @@
 import socket
 import tkinter as tk
-import os
-import webbrowser
 
 
 class client:
@@ -68,19 +66,11 @@ class client:
         self.text_box.delete('1.0', tk.END)
         self.text_box.configure(state='disabled')
 
-    def delete_local_files(self):
-        try:
-            for file in os.listdir("to_read"):
-                os.remove("to_read\\" + file)
-        except:
-            pass
-
     # send quit to the server to stop the connection with the server
     def close_button(self):
         self.my_socket.send("close_window".encode())
         self.my_socket.close()
         self.root.destroy()
-        self.delete_local_files()
 
     # add back_menu to menu_bar, add it to window
     def create_menu(self):
@@ -167,24 +157,32 @@ class client:
 
     # graphic - the file of the method
     def show_files_results(self, methods, method):
-        self.delete_local_files()
+        self.delete_items()
+        self.delete_text_box()
+        self.back_menu.delete(0)
+        self.back_menu.add_command(label="methods", command=lambda: self.show_methods(methods))
+        self.text_box.pack()
+        self.text_box.configure(height=10)
+        self.print_message("Click the file you want to open")
         # create button for every file result
         results = self.send_and_rec("get_files; {}".format(method))
         files = results.split(", ")
-        html = []
-        counter = 0
-        for file_name in files:
-            the_path = "to_read\\" + str(counter) + ".txt"
-            with open(the_path, 'w') as new_file:
-                text_file = self.rec_file(file_name)
-                new_file.write(text_file)
-            link = "<h1><a href=" + the_path + ">" + file_name + "</a></h1>"
-            html.append(link)
-            counter += 1
-        with open('index.html', 'w') as html_file:
-            for html_item in html:
-                html_file.write('%s\n' % html_item)
-        webbrowser.open("index.html")
+        for button_text in files:
+            button = tk.Button(self.root, text=button_text,
+                               command=lambda name=button_text: self.show_file(methods, method, name))
+            button.pack()
+
+    # graphic - the file
+    def show_file(self, methods, method, file_name):
+        self.delete_items()
+        self.delete_text_box()
+        self.back_menu.delete(0)
+        self.back_menu.add_command(label="files", command=lambda: self.show_files_results(methods, method))
+        self.text_box.pack()
+        self.text_box.configure(height=30)
+        # get the file from server
+        text = self.rec_file(file_name)
+        self.print_message(text)
 
     # get the file from server
     def rec_file(self, file_name):

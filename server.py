@@ -15,6 +15,7 @@ class server:
         self.open_client_sockets = []
         self.messages_to_send = []
         self.create = create_db.create(data_base_path, files_path)
+        self.words_to_add = []    # words to add after client close
         self.socket_names = []    # the user name of every socket
 
     # send messages
@@ -107,6 +108,8 @@ class server:
         files_lst = ""
         times = 0
         for row in cursor:
+            if times > 20:
+                break
             if row[0] == method:
                 times += 1
                 files_lst += row[1] + ", "
@@ -217,6 +220,16 @@ class server:
                         for socket in self.socket_names:
                             if socket[0] == current_socket:
                                 self.socket_names.remove(socket)
+                        # add word to data base
+                        for to_add in self.words_to_add:
+                            if to_add[0] == current_socket:
+                                try:
+                                    thread = threading.Thread(target=lambda: self.create.insert_keys(
+                                        keys_column1, keys_column2, to_add[1]))
+                                    thread.start()
+                                except:
+                                    pass
+                                self.words_to_add.remove(to_add)
                     # sign up message
                     elif "sign_up" in the_word:
                         try:
@@ -269,6 +282,9 @@ class server:
                             results = self.find_word(the_word)
                             # there is no results to the word
                             if results == "no results":
+                                # add the word to words_to_add
+                                if the_word not in self.words_to_add:
+                                    self.words_to_add.append((current_socket, the_word))
                                 self.messages_to_send.append((current_socket, results))
                             # if there are results
                             else:
