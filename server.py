@@ -54,18 +54,18 @@ class server:
 
     # find the grade of every file
     def get_grade(self, names_lst):
-        file_lst = []
+        new_lst = []
         for name in names_lst:
             # how much matches in the file
             grade = 0
             for another_name in names_lst:
                 if another_name == name:
                     grade += 1
-            # add the file name with its grade to list
-            current_file = (name, grade)
-            if current_file not in file_lst:
-                file_lst.append(current_file)
-        return file_lst
+            # add the name with its grade to list
+            current_name = (name, grade)
+            if current_name not in new_lst:
+                new_lst.append(current_name)
+        return new_lst
 
     # return the list as ordered string
     def return_results(self, file_lst):
@@ -101,7 +101,7 @@ class server:
             lst.remove(max_file)
         return order_lst
 
-    # find the files withe the method
+    # find the files with the method
     def find_file(self, method):
         conn = sqlite3.connect(self.data_base_path)
         cursor = conn.execute("SELECT * from {}".format(self.keys_table_name))
