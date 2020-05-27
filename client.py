@@ -232,5 +232,5 @@ class client:
         self.root.mainloop()
 
 
-server_ip = '127.0.0.1'
+server_ip = input("What is the server ip?")
 client(server_ip).main()
